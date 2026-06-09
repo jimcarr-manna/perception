@@ -1,0 +1,48 @@
+{
+  "name": "ROS 2 Development Container",
+  "privileged": true,
+  "remoteUser": "jcarr",
+  "build": {
+      "dockerfile": "Dockerfile",
+      "args": {
+          "USERNAME": "jcarr"
+      }
+  },
+  "workspaceFolder": "/home/ros2_ws",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ros2_ws,type=bind",
+  "customizations": {
+      "vscode": {
+          "extensions":[
+              "ms-vscode.cpptools",
+              "ms-vscode.cpptools-themes",
+              "twxs.cmake",
+              "donjayamanne.python-extension-pack",
+              "eamodio.gitlens",
+              "ms-iot.vscode-ros"
+          ]
+      }
+  },
+  "containerEnv": {
+      "DISPLAY": "host.docker.internal:0",
+      "ROS_DOMAIN_ID": "0",
+      "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+      "CYCLONEDDS_URI": "file:///home/ros2_ws/cyclonedds.xml",
+      "ROS_LOCALHOST_ONLY": "0"
+  },
+  "remoteEnv":{
+    "DISPLAY": "host.docker.internal:0",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "GALLIUM_DRIVER": "llvmpipe",
+    "QT_X11_NO_MITSHM": "1"
+},
+  "runArgs": [
+      "--net=host",
+      "--pid=host",
+      "--ipc=host",
+      "-e", "DISPLAY=host.docker.internal:0"
+  ],
+  "mounts": [
+     "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "rosdep update && sudo rosdep install --from-paths /home/ros2_ws/src --ignore-src -r -y && sudo apt install ros-humble-turtlesim && sudo chown -R $(whoami)"
+}
