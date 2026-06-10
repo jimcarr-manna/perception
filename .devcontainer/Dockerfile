@@ -20,6 +20,8 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y python3-pip
 RUN apt-get install -y libgl1
 ENV SHELL=/bin/bash
+ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+ENV CYCLONEDDS_URI=
 
 # ********************************************************
 # * Anything else you want to do like clean up goes here *

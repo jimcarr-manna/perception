@@ -29,7 +29,7 @@ from rgb_lidar_bev.ros2_bridge import (
     laser_scan_to_ranges_angles,
     quat_to_R,
 )
-from rgb_lidar_bev.demo_streaming import _process_image   # pure processing, no offline deps
+from rgb_lidar_bev.frame_processor import _COMPOSITE_H, _COMPOSITE_W, _process_image
 from rgb_lidar_bev.sector_proximity import generate_sector_proximity
 from rgb_lidar_bev.sector_viz import SectorAsciiViz, SectorFanViz
 
@@ -53,9 +53,6 @@ def _image_msg_to_bgr(msg: Image) -> np.ndarray:
             cv2.COLOR_GRAY2BGR,
         )
     raise ValueError(f"Unsupported image encoding: {msg.encoding}")
-
-_COMPOSITE_H = 240
-_COMPOSITE_W = 500
 
 class BevNode(Node):
     def __init__(self) -> None:
