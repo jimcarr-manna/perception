@@ -1,4 +1,4 @@
-# rgb_lidar_bev
+# Perception & Navigation
 
 ROS 2 BEV perception + joystick-driven safety nav for JetAuto Orin Nano.
 
@@ -147,7 +147,73 @@ ros2 topic echo /cmd_vel
 - NumPy / OpenCV ABI mismatch errors
   - Align package versions in ROS runtime Python environment
 
+## Minimal AMCL Goal Navigation Runbook
+
+This is the new autonomous path (localize on a known map, then navigate to a
+goal) while keeping `/bev/sector_proximity` unchanged.
+
+### 1) Set map yaml path (map_01 default)
+
+The launch uses a default map path:
+
+- `/home/ubuntu/ros2_ws/src/slam/maps/map_01.yaml`
+
+If your map lives elsewhere, override at launch time with
+`map_yaml_file:=/absolute/path/to/your_map.yaml`.
+
+### 2) Launch autonomy stack
+
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch rgb_lidar_bev slam_goal_nav.launch.py
+```
+
+Example with explicit map path:
+
+```bash
+ros2 launch rgb_lidar_bev slam_goal_nav.launch.py \
+  map_yaml_file:=/home/ubuntu/ros2_ws/src/slam/maps/map_01.yaml
+```
+
+This starts:
+
+- `bev_node` -> publishes `/bev/sector_proximity`
+- `bev_obstacle_bridge` -> publishes `/bev/obstacle_scan` (+ optional `/bev/human_obstacle_scan`)
+- `joy_estop_gate` -> enforces controller Y/X safety gating on final `/cmd_vel`
+- Nav2 localization stack (AMCL + map_server) using `map_01.yaml`
+- Nav2 navigation stack
+
+Autonomous-mode controller behavior:
+
+- Press **Y** (`button[4]`) to enable motion output to `/cmd_vel`
+- Press **X** (`button[3]`) to latch e-stop and force stop output
+- After an X e-stop, press Y again to re-enable motion
+
+### 3) Send initial pose + goal
+
+Use the included goal client to set approximate initial pose and send one goal:
+
+```bash
+ros2 run rgb_lidar_bev goal_client \
+  --ros-args \
+  -p send_initial_pose:=true \
+  -p initial_x:=-0.35 -p initial_y:=-0.07 -p initial_yaw:=-1.283 \
+  -p goal_x:=4.15 -p goal_y:=-1.07 -p goal_yaw:=0.312
+```
+
+### 4) Quick checks if navigation does not start
+
+```bash
+ros2 topic echo /scan
+ros2 topic echo /odom
+ros2 topic echo /bev/obstacle_scan
+ros2 action list | grep navigate_to_pose
+```
+
+If `/scan` or `/odom` is missing, fix robot bringup first.
+
 ## Scope Note
 
-This README intentionally prioritizes the launch and operation path for
-`bev_nav_stack`. Offline replay/demo workflows are not documented here.
+The`bev_nav_stack` is included for fallback and testing only. It exposes the vanilla
+bev_node and nav_node (push forward to detect human or obstacle - and estop)
